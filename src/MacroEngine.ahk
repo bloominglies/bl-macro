@@ -14,7 +14,12 @@
         this.WTarget := 0
         this.WGeneration := 0
         this.WTimer := 0
-        this.M1PhysicalHeld := false
+        this.HoldM1 := HoldM1Controller(this)
+        this.M2PhysicalHeld := false
+        this.LastAttackButton := ""
+        this.LastAttackTarget := 0
+        this.LastAttackAt := 0
+        this.RunResumeButton := ""
         this.RunResumeTimer := 0
         this.RunResumeGeneration := 0
         this.RunRestartInProgress := false
@@ -27,13 +32,15 @@
         this.WeaponReturnTimer := 0
         this.WCriterion := ObjBindMethod(this, "ShouldInterceptW")
         this.NumericCriterion := ObjBindMethod(this, "ShouldObserveNumeric")
+        this.M1Criterion := ObjBindMethod(this, "ShouldInterceptM1")
     }
 
     Start() {
         this.Running := true
         ; If launched with a key held, require a release before arming that key.
         this.WPhysicalHeld := GetKeyState("w", "P")
-        this.M1PhysicalHeld := GetKeyState("LButton", "P")
+        this.HoldM1.PhysicalHeld := GetKeyState("LButton", "P")
+        this.M2PhysicalHeld := GetKeyState("RButton", "P")
 
         HotIf(this.WCriterion)
         Hotkey("$*w", ObjBindMethod(this, "WDown", true), "On T1 I0")
@@ -43,9 +50,15 @@
         ; They pass through native input and never send macro input outside Roblox.
         Hotkey("~$*w", ObjBindMethod(this, "WDown", false), "On T1 I0")
         Hotkey("~$*w up", ObjBindMethod(this, "WUp"), "On T1 I0")
-        ; Mouse observers preserve native M1 and ignore our level-0 clicks.
-        Hotkey("~*LButton", ObjBindMethod(this, "M1Down"), "On T1 I0")
+        HotIf(this.M1Criterion)
+        Hotkey("*LButton", ObjBindMethod(this, "M1Down", true), "On T1 I0")
+        Hotkey("*LButton up", ObjBindMethod(this, "M1Up"), "On T1 I0")
+        HotIf()
+        ; Passive observers preserve native mouse input and ignore level-0 sends.
+        Hotkey("~*LButton", ObjBindMethod(this, "M1Down", false), "On T1 I0")
         Hotkey("~*LButton up", ObjBindMethod(this, "M1Up"), "On T1 I0")
+        Hotkey("~*RButton", ObjBindMethod(this, "M2Down"), "On T1 I0")
+        Hotkey("~*RButton up", ObjBindMethod(this, "M2Up"), "On T1 I0")
         this.PrepareTriggers(this.Config)
     }
 
@@ -85,6 +98,15 @@
         return this.Running && this.Config.masterEnabled && this.Config.movementEnabled
             && (!this.WPhysicalHeld || this.WCaptured)
             && WinActive("ahk_exe " FocusMonitor.ProcessName)
+    }
+
+    ShouldInterceptM1(*) {
+        if !this.Running || !this.Config.masterEnabled || !this.Config.holdM1Enabled
+            return false
+        hwnd := WinActive("ahk_exe " FocusMonitor.ProcessName)
+        if this.HoldM1.PhysicalHeld
+            return this.HoldM1.Captured && hwnd = this.HoldM1.Target
+        return hwnd && RobloxInput.PointerOverTarget(hwnd)
     }
 
     ShouldObserveNumeric(*) {
@@ -159,48 +181,96 @@
         }
         this.WVirtualDown := true
         SendEvent("{Blind}{w down}")
-        this.RunRestartInProgress := false
+        if this.RunRestartInProgress {
+            this.RunRestartInProgress := false
+            this.RunResumeButton := ""
+            this.HoldM1.Resume()
+        }
     }
 
-    CanResumeRun(hwnd) {
-        return this.Config.resumeAfterM1 && hwnd = this.WTarget && this.CanContinueW(this.WGeneration)
+    CanResumeRun(hwnd, button) {
+        enabled := button = "right" ? this.Config.resumeAfterM2 : this.Config.resumeAfterM1
+        return enabled && hwnd = this.WTarget && this.CanContinueW(this.WGeneration)
     }
 
-    M1Down(*) {
+    M1Down(intercept, *) {
         Critical("On")
-        if this.M1PhysicalHeld
+        if this.HoldM1.PhysicalHeld
             return
-        this.M1PhysicalHeld := true
-        ; Each attack cancels the older delay and any partially restarted tap.
-        this.CancelRunResume()
-        hwnd := this.WTarget
-        if !this.CanResumeRun(hwnd) || !RobloxInput.PointerOverTarget(hwnd)
+        this.HoldM1.PhysicalHeld := true
+        hwnd := WinActive("ahk_exe " FocusMonitor.ProcessName)
+        if !hwnd || !RobloxInput.PointerOverTarget(hwnd)
             return
-        this.ScheduleRunResume(hwnd)
+        if intercept
+            this.HoldM1.Capture(hwnd)
+        else
+            this.MouseAttack(hwnd, "left")
     }
 
     M1Up(*) {
         Critical("On")
-        this.M1PhysicalHeld := false
+        captured := this.HoldM1.Captured
+        hadAttack := this.HoldM1.HadAttack
+        hwnd := this.HoldM1.Target
+        this.HoldM1.PhysicalHeld := false
+        this.HoldM1.Cancel()
+        if captured && hadAttack && this.LastAttackButton = "left" && this.LastAttackTarget = hwnd
+            this.ScheduleRunResume(hwnd, "left", this.LastAttackAt)
     }
 
-    ScheduleRunResume(hwnd) {
+    M2Down(*) {
+        Critical("On")
+        if this.M2PhysicalHeld
+            return
+        this.M2PhysicalHeld := true
+        this.HoldM1.Pause()
+        this.CancelRunResume()
+        hwnd := WinActive("ahk_exe " FocusMonitor.ProcessName)
+        if hwnd && RobloxInput.PointerOverTarget(hwnd)
+            this.MouseAttack(hwnd, "right")
+    }
+
+    M2Up(*) {
+        Critical("On")
+        this.M2PhysicalHeld := false
+        this.HoldM1.Resume()
+    }
+
+    MouseAttack(hwnd, button, fromHold := false) {
         Critical("On")
         this.CancelRunResume()
-        if !this.CanResumeRun(hwnd)
-            return
-        generation := this.RunResumeGeneration
-        this.RunResumeTimer := ObjBindMethod(this, "ResumeRun", generation, this.WGeneration, hwnd)
-        SetTimer(this.RunResumeTimer, -this.Config.runResumeDelay)
+        this.LastAttackButton := button
+        this.LastAttackTarget := hwnd
+        this.LastAttackAt := A_TickCount
+        ; Continuous M1 attacks recover after the final pulse, not mid-combo.
+        if !fromHold
+            this.ScheduleRunResume(hwnd, button)
     }
 
-    ResumeRun(generation, movementGeneration, hwnd) {
+    ScheduleRunResume(hwnd, button, attackAt := 0) {
+        Critical("On")
+        this.CancelRunResume()
+        if !this.CanResumeRun(hwnd, button)
+            return
+        generation := this.RunResumeGeneration
+        delay := button = "right" ? this.Config.runResumeM2Delay : this.Config.runResumeDelay
+        if attackAt
+            delay := Max(1, delay - (A_TickCount - attackAt))
+        this.RunResumeButton := button
+        this.RunResumeTimer := ObjBindMethod(this, "ResumeRun", generation, this.WGeneration, hwnd, button)
+        SetTimer(this.RunResumeTimer, -delay)
+    }
+
+    ResumeRun(generation, movementGeneration, hwnd, button) {
         Critical("On")
         if generation != this.RunResumeGeneration
             return
         this.RunResumeTimer := 0
-        if movementGeneration != this.WGeneration || !this.CanResumeRun(hwnd)
+        if movementGeneration != this.WGeneration || !this.CanResumeRun(hwnd, button) {
+            this.RunResumeButton := ""
+            this.HoldM1.Resume()
             return
+        }
         if this.WTimer {
             SetTimer(this.WTimer, 0)
             this.WTimer := 0
@@ -217,6 +287,7 @@
     CancelRunResume() {
         Critical("On")
         this.RunResumeGeneration += 1
+        this.RunResumeButton := ""
         if this.RunResumeTimer {
             SetTimer(this.RunResumeTimer, 0)
             this.RunResumeTimer := 0
@@ -262,6 +333,7 @@
         this.WTarget := 0
         this.ReleaseW()
         this.CancelRunResume()
+        this.HoldM1.Resume()
         ; Do not clear physical latch here: repeat must never start a new cycle.
     }
 
@@ -274,24 +346,34 @@
         if !numeric && !this.TriggerSlots.Has(source)
             return
         ; A newer configured key or native number supersedes older casts/returns.
-        this.CancelNumeric()
-        if !eligible || !this.ShouldObserveNumeric()
+        this.CancelNumeric(false)
+        if !eligible || !this.ShouldObserveNumeric() {
+            this.HoldM1.Resume()
             return
+        }
+        this.HoldM1.Pause()
         slot := this.TriggerSlots.Has(source) ? this.TriggerSlots[source] : ""
-        if slot = ""
+        if slot = "" {
+            this.HoldM1.Resume()
             return
+        }
         action := this.Config.binds[slot]
-        if action = "disabled" || action = "weapon"
+        if action = "disabled" || action = "weapon" {
+            this.HoldM1.Resume()
             return
+        }
         hwnd := WinActive("ahk_exe " FocusMonitor.ProcessName)
-        if !hwnd
+        if !hwnd {
+            this.HoldM1.Resume()
             return
+        }
         ; The physical configured key has already reached Roblox through the tilde
         ; hotkey. Never send the entry's legacy number or another selection here.
         id := ++this.ClickSequence
         callback := ObjBindMethod(this, "PrepareClick", id, this.NumericGeneration, hwnd, action)
         this.PendingClicks[id] := callback
-        SetTimer(callback, -this.Config.clickDelay)
+        delay := this.Config.skillDelays[slot]
+        SetTimer(callback, -(delay ? delay : this.Config.clickDelay))
     }
 
     NumericUp(source, *) {
@@ -304,18 +386,29 @@
             && this.Config.masterEnabled && this.Config.numericEnabled && this.IsTargetActive(hwnd)
     }
 
+    MouseAvailable(button, hwnd) {
+        owned := button = "LButton" && this.HoldM1.Captured && this.HoldM1.Target = hwnd
+        return !GetKeyState(button) && (!GetKeyState(button, "P") || owned)
+    }
+
+    DropClick(id) {
+        if this.PendingClicks.Has(id)
+            this.PendingClicks.Delete(id)
+        this.HoldM1.Resume()
+    }
+
     PrepareClick(id, generation, hwnd, action) {
         Critical("On")
         if !this.PendingClicks.Has(id)
             return
         button := action = "left" ? "LButton" : "RButton"
-        if !this.CanContinueNumeric(generation, hwnd) || GetKeyState(button, "P") || GetKeyState(button) {
-            this.PendingClicks.Delete(id)
+        if !this.CanContinueNumeric(generation, hwnd) || !this.MouseAvailable(button, hwnd) {
+            this.DropClick(id)
             return
         }
         if this.Config.shiftlockCenter {
             if !RobloxInput.CenterCursor(hwnd) {
-                this.PendingClicks.Delete(id)
+                this.DropClick(id)
                 return
             }
             ; Give the client a frame to observe the centered pointer, without Sleep.
@@ -331,23 +424,31 @@
         Critical("On")
         if !this.PendingClicks.Has(id)
             return
-        this.PendingClicks.Delete(id)
-        if !this.CanContinueNumeric(generation, hwnd)
+        if !this.CanContinueNumeric(generation, hwnd) {
+            this.DropClick(id)
             return
+        }
         button := action = "left" ? "LButton" : "RButton"
-        ; Never release a real mouse button held by the user or another application.
-        if GetKeyState(button, "P") || GetKeyState(button)
+        ; A captured Hold M1 can yield its button; native physical holds cannot.
+        if !this.MouseAvailable(button, hwnd) {
+            this.DropClick(id)
             return
-        if this.Config.shiftlockCenter && !RobloxInput.CenterCursor(hwnd)
+        }
+        if this.Config.shiftlockCenter && !RobloxInput.CenterCursor(hwnd) {
+            this.DropClick(id)
             return
-        if !this.CanContinueNumeric(generation, hwnd)
+        }
+        if !this.CanContinueNumeric(generation, hwnd) {
+            this.DropClick(id)
             return
+        }
+        this.PendingClicks.Delete(id)
         ; Default mode preserves the cursor; center mode leaves it at the game center.
         SendEvent("{Blind}{" button " down}{" button " up}")
-        ; Synthetic left clicks skip the hook, so notify the movement motor once.
-        if action = "left"
-            this.ScheduleRunResume(hwnd)
+        ; Synthetic clicks skip the hooks; notify movement once for either button.
+        this.MouseAttack(hwnd, action)
         this.ScheduleWeaponReturn(generation, hwnd)
+        this.HoldM1.Resume()
     }
 
     WeaponKey() {
@@ -370,20 +471,19 @@
         if generation != this.NumericGeneration
             return
         this.WeaponReturnTimer := 0
-        if !this.CanContinueNumeric(generation, hwnd) || this.WeaponKey() != key
-            return
-        token := KeyBindings.Token(this.Config.triggers[key])
-        ; Never synthesize key-up over a physical weapon press.
-        if GetKeyState(token, "P") || GetKeyState(token)
-            return
-        if !this.IsTargetActive(hwnd)
-            return
-        ; Hook hotkeys ignore these synthetic events; this cannot trigger a new cast.
-        ; Blind also preserves the virtual W hold and the user's modifier keys.
-        SendEvent("{Blind}{" token " down}{" token " up}")
+        try {
+            if !this.CanContinueNumeric(generation, hwnd) || this.WeaponKey() != key
+                return
+            token := KeyBindings.Token(this.Config.triggers[key])
+            if GetKeyState(token, "P") || GetKeyState(token) || !this.IsTargetActive(hwnd)
+                return
+            SendEvent("{Blind}{" token " down}{" token " up}")
+        } finally {
+            this.HoldM1.Resume()
+        }
     }
 
-    CancelNumeric() {
+    CancelNumeric(resumeHold := true) {
         Critical("On")
         this.NumericGeneration += 1
         for id, callback in this.PendingClicks
@@ -393,10 +493,13 @@
             SetTimer(this.WeaponReturnTimer, 0)
             this.WeaponReturnTimer := 0
         }
+        if resumeHold
+            this.HoldM1.Resume()
     }
 
     FocusChanged(hwnd, previous) {
         if hwnd != previous {
+            this.HoldM1.Cancel()
             this.CancelMovement()
             this.CancelNumeric()
         }
@@ -407,10 +510,19 @@
         previous := this.Config
         this.Config := config
         this.RebuildTriggerLookup(config)
+        if !config.masterEnabled || !config.holdM1Enabled
+            this.HoldM1.Cancel()
+        else if config.holdM1Interval != previous.holdM1Interval {
+            this.HoldM1.Pause()
+            this.HoldM1.Resume()
+        }
         if !config.masterEnabled || !config.movementEnabled || config.wInterval != previous.wInterval
             this.CancelMovement()
         if config.resumeAfterM1 != previous.resumeAfterM1 || config.runResumeDelay != previous.runResumeDelay
+            || config.resumeAfterM2 != previous.resumeAfterM2 || config.runResumeM2Delay != previous.runResumeM2Delay {
             this.CancelRunResume()
+            this.HoldM1.Resume()
+        }
         changed := !config.masterEnabled || !config.numericEnabled || config.clickDelay != previous.clickDelay
             || config.weaponReturnDelay != previous.weaponReturnDelay || config.shiftlockCenter != previous.shiftlockCenter
         for key, action in config.binds
@@ -419,6 +531,9 @@
         for slot, source in config.triggers
             if source != previous.triggers[slot]
                 changed := true
+        for slot, delay in config.skillDelays
+            if delay != previous.skillDelays[slot]
+                changed := true
         if changed
             this.CancelNumeric()
     }
@@ -426,6 +541,7 @@
     Stop() {
         Critical("On")
         this.Running := false
+        this.HoldM1.Cancel()
         this.CancelMovement()
         this.CancelNumeric()
     }

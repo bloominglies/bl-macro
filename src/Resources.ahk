@@ -1,5 +1,5 @@
 ﻿class Resources {
-    static Version := "1.5.1"
+    static Version := "1.6.0"
 
     static DataDirectory() {
         root := EnvGet("LOCALAPPDATA")

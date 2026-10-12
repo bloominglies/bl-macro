@@ -17,12 +17,13 @@ class MacroOverlay {
         open.OnEvent("Click", ObjBindMethod(app, "OpenWindow"))
         this.Movement := this.Row(9, 30, 67, "movementEnabled", "W")
         this.Numeric := this.Row(99, 30, 78, "numericEnabled", "cast")
+        this.Hold := this.Row(9, 54, 177, "holdM1Enabled", "hold M1")
         this.Window.SetFont("s8 c858585", "Consolas")
-        this.Status := this.Window.AddText("x9 y57 w177 h17", "Roblox: …")
+        this.Status := this.Window.AddText("x9 y81 w177 h17", "Roblox: …")
         this.Window.AddText("x0 y0 w194 h1 Background292929")
-        this.Window.AddText("x0 y81 w194 h1 Background292929")
-        this.Window.AddText("x0 y0 w1 h82 Background292929")
-        this.Window.AddText("x193 y0 w1 h82 Background292929")
+        this.Window.AddText("x0 y105 w194 h1 Background292929")
+        this.Window.AddText("x0 y0 w1 h106 Background292929")
+        this.Window.AddText("x193 y0 w1 h106 Background292929")
         this.NoticeUntil := 0
         this.ActivateHandler := ObjBindMethod(this, "MouseActivate")
         this.MoveHandler := ObjBindMethod(this, "MoveFinished")
@@ -32,7 +33,7 @@ class MacroOverlay {
         OnMessage(0x21, this.ActivateHandler)
         OnMessage(0x232, this.MoveHandler)
         OnMessage(0x7E, this.DisplayHandler)
-        this.Window.Show("Hide w194 h82")
+        this.Window.Show("Hide w194 h106")
         this.RestorePosition()
     }
 
@@ -126,6 +127,7 @@ class MacroOverlay {
         this.SetState(this.Master, "", config.masterEnabled)
         this.SetState(this.Movement, "W", config.movementEnabled)
         this.SetState(this.Numeric, "cast", config.numericEnabled)
+        this.SetState(this.Hold, "hold M1", config.holdM1Enabled)
         if A_TickCount >= this.NoticeUntil
             this.SetText(this.Status, "Roblox: " MarcoApplication.FocusLabel(this.App.Focus.Status))
         show := this.App.Bridge.Ready && !WinActive(this.App.Host.Window.Hwnd)

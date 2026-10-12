@@ -2,13 +2,14 @@
 
 A Windows desktop macro utility for Bloodlines on Roblox. Built with AutoHotkey v2 and a local WebView2 interface.
 
-Version **1.5.1** · Windows 10/11 x64
+Version **1.6.0** · Windows 10/11 x64
 
 ## Features
 
 - **Double Tap W:** starts a double tap when W is pressed and holds the second press until W is released.
-- **Resume after M1:** repeats the double tap after a left-click attack while W remains held.
-- **Autocast:** adds a left or right click after a configured key is pressed. Ten bindings are available, initially 1–0.
+- **Resume after M1/M2:** repeats the double tap after an attack while W remains held, with separate delays for each mouse button.
+- **Hold M1:** repeats left-click attacks while the mouse button is held.
+- **Autocast:** adds a left or right click after a configured key is pressed. Ten bindings are available, initially 1–0, with individual skill delays.
 - **Custom keys:** replace a binding's key without changing the key sent to the game. Binding Z means Roblox receives Z.
 - **Weapon return:** select one binding as the weapon and return to it after an autocast.
 - **Center aim:** optionally position the cursor at the game window's center before an autocast. Enable this manually when using shiftlock.
@@ -39,11 +40,17 @@ The header's **Motor** switch enables or pauses all macros. Roblox status is **f
 | --- | --- | --- |
 | Double tap interval | 60 ms | 20–250 ms |
 | Resume after M1 | On | On / Off |
-| Resume delay | 350 ms | 20–2000 ms |
+| M1 Delay | 350 ms | 20–2000 ms |
+| Resume after M2 | On | On / Off |
+| M2 Delay | 500 ms | 20–2000 ms |
+| Hold M1 | Off | On / Off |
+| Hold M1 click interval | 100 ms | 50–1000 ms |
 
 The initial W tap lasts 24 ms, followed by the configured interval and a held second press. Windows key repeat does not restart the sequence.
 
 Resume delay starts when the left mouse button is pressed. Each new attack restarts the delay; holding the button does not block recovery. Left clicks from autocast also schedule recovery. Releasing W, disabling movement or the engine, or losing Roblox focus cancels it. Recovery releases W for 50 ms, presses it for 50 ms, waits the configured double tap interval and holds the second press. Increase the resume delay if the attack animation still prevents sprinting.
+
+M2 uses its own toggle and delay, including right clicks from autocast. The latest attack determines the recovery delay. With **Hold M1**, recovery waits for the final repeated attack. Hold M1 pauses during autocast and weapon return, and while M2 is held or its sprint recovery is pending. It resumes only if M1 remains held in the same focused Roblox window. Releasing M1, disabling Hold M1 or the engine, losing focus or suspending Windows stops repeated clicks immediately.
 
 ### Keybinds
 
@@ -59,6 +66,8 @@ Configure the same key for the skill inside the game. For example, replacing `[7
 | Weapon Return | 150 ms | 20–2000 ms |
 | Center aim | Off | On / Off |
 
+Each click binding has a delay field beside its action (20–2000 ms). Leave it empty to use the global Click Delay. The override follows the binding when its key is changed and is saved with the other preferences.
+
 Only one binding can be **Weapon**. It selects normally without an autocast. Weapon Return is counted after the skill's click and sends the weapon's configured key. A new bound key or a physical top-row digit cancels an older pending cast or weapon return.
 
 **Center aim** must be switched on and off alongside shiftlock in Roblox. It moves the cursor to the client area's center and leaves it there; with the option off, cursor position is preserved. Keep the overlay away from the center, since a covered center point cancels the cast.
@@ -67,7 +76,7 @@ Only one binding can be **Weapon**. It selects normally without an autocast. Wea
 
 Settings include starting with Windows, starting minimized, minimizing to the tray on close and restoring defaults. Use **Sair** in the tray menu to exit fully.
 
-Drag **Marco** in the overlay to move it. The adjacent state toggles the engine; **W** and **cast** toggle movement and autocast; **open** restores the main window. Overlay position and preferences are saved locally.
+Drag **Marco** in the overlay to move it. The adjacent state toggles the engine; **W**, **cast** and **hold M1** toggle their features; **open** restores the main window. Overlay position and preferences are saved locally.
 
 - Configuration: `%LOCALAPPDATA%\BloodlinesMacro\settings.ini`
 - Startup diagnostics: `%LOCALAPPDATA%\BloodlinesMacro\startup.log`

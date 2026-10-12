@@ -5,7 +5,7 @@
 #InputLevel 0
 ;@Ahk2Exe-SetName Marco (Bloodlines)
 ;@Ahk2Exe-SetDescription Marco (Bloodlines) - local macro utility
-;@Ahk2Exe-SetVersion 1.5.1
+;@Ahk2Exe-SetVersion 1.6.0
 ;@Ahk2Exe-SetMainIcon assets\marco.ico
 
 #Include vendor\WebView2\WebView2.ahk
@@ -15,6 +15,7 @@
 #Include src\StartupManager.ahk
 #Include src\FocusMonitor.ahk
 #Include src\RobloxInput.ahk
+#Include src\HoldM1.ahk
 #Include src\MacroEngine.ahk
 #Include src\JsonWriter.ahk
 #Include src\UiBridge.ahk

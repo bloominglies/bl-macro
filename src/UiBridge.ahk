@@ -33,6 +33,8 @@
                 this.App.BindingChanged(parts[2], parts[3])
             } else if parts.Length = 3 && parts[1] = "trigger" {
                 this.App.TriggerChanged(parts[2], parts[3])
+            } else if parts.Length = 3 && parts[1] = "delay" {
+                this.App.SkillDelayChanged(parts[2], parts[3])
             } else if parts.Length = 2 && parts[1] = "layout" {
                 if !RegExMatch(parts[2], "^\d{3}$") || Integer(parts[2]) < 200 || Integer(parts[2]) > 600
                     throw ValueError("Dimensão de interface inválida.")
@@ -53,10 +55,12 @@
         config := this.App.Config
         settings := Map()
         for field in ["masterEnabled", "movementEnabled", "numericEnabled", "wInterval", "clickDelay", "weaponReturnDelay", "shiftlockCenter", "resumeAfterM1", "runResumeDelay",
+            "resumeAfterM2", "runResumeM2Delay", "holdM1Enabled", "holdM1Interval",
             "startWithWindows", "startMinimized", "minimizeOnClose"]
             settings[field] := config.%field%
         settings["binds"] := config.binds
         settings["triggers"] := config.triggers
+        settings["skillDelays"] := config.skillDelays
         payload := Map("type", "state", "revision", ++this.Revision, "ack", requestId, "version", Resources.Version,
             "robloxStatus", this.App.Focus.Status, "settings", settings)
         payload["triggerKeys"] := KeyBindings.SupportedKeys()

@@ -151,17 +151,18 @@
     SettingChanged(name, value) {
         next := SettingsStore.Copy(this.Config)
         switch name {
-            case "masterEnabled", "movementEnabled", "numericEnabled", "shiftlockCenter", "resumeAfterM1", "startWithWindows", "startMinimized", "minimizeOnClose":
+            case "masterEnabled", "movementEnabled", "numericEnabled", "shiftlockCenter", "resumeAfterM1", "resumeAfterM2", "holdM1Enabled", "startWithWindows", "startMinimized", "minimizeOnClose":
                 if value != "0" && value != "1"
                     throw ValueError("Valor booleano inválido.")
                 next.%name% := value = "1"
-            case "wInterval", "clickDelay", "weaponReturnDelay", "runResumeDelay":
+            case "wInterval", "clickDelay", "weaponReturnDelay", "runResumeDelay", "runResumeM2Delay", "holdM1Interval":
                 if !RegExMatch(value, "^\d{1,4}$")
                     throw ValueError("Informe um intervalo inteiro em milissegundos.")
-                maximum := name = "wInterval" ? 250 : name = "clickDelay" ? 1000 : 2000
+                maximum := name = "wInterval" ? 250 : (name = "clickDelay" || name = "holdM1Interval") ? 1000 : 2000
+                minimum := name = "holdM1Interval" ? 50 : 20
                 number := Integer(value)
-                if number < 20 || number > maximum
-                    throw ValueError("O intervalo deve estar entre 20 e " maximum " ms.")
+                if number < minimum || number > maximum
+                    throw ValueError("O intervalo deve estar entre " minimum " e " maximum " ms.")
                 next.%name% := number
             default: throw ValueError("Configuração desconhecida.")
         }
@@ -179,6 +180,17 @@
                     next.binds[otherKey] := "disabled"
         }
         next.binds[key] := action
+        this.Commit(next)
+    }
+
+    SkillDelayChanged(slot, value) {
+        if !this.Config.skillDelays.Has(slot) || !RegExMatch(value, "^\d{1,4}$")
+            throw ValueError("Atraso de skill inválido.")
+        delay := Integer(value)
+        if delay != 0 && (delay < 20 || delay > 2000)
+            throw ValueError("Use 20–2000 ms ou deixe vazio para usar o atraso geral.")
+        next := SettingsStore.Copy(this.Config)
+        next.skillDelays[slot] := delay
         this.Commit(next)
     }
 
@@ -228,6 +240,7 @@
     PowerChanged(event, *) {
         ; Suspend/resume must discard pending work even if the foreground is stale.
         if (event = 4 || event = 7 || event = 0x12) && this.Engine {
+            this.Engine.HoldM1.Cancel()
             this.Engine.CancelMovement()
             this.Engine.CancelNumeric()
         }

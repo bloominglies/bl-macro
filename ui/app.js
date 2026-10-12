@@ -5,7 +5,7 @@
   const $$ = selector => [...document.querySelectorAll(selector)];
   const pages = ["movement", "keybinds", "settings"];
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
-  const timingFields = ["wInterval", "clickDelay", "weaponReturnDelay", "runResumeDelay"];
+  const timingFields = ["wInterval", "clickDelay", "weaponReturnDelay", "runResumeDelay", "runResumeM2Delay", "holdM1Interval"];
   const channel = window.chrome?.webview;
   const queue = [];
   let page = "movement";
@@ -93,7 +93,7 @@
 
   function setBusy() {
     const disabled = !channel || !state || Boolean(inFlight);
-    $$("[data-control]").forEach(control => { control.disabled = disabled; });
+    $$("[data-control]").forEach(control => { control.disabled = disabled || control.dataset.unavailable === "true"; });
     $("#master-button").setAttribute("aria-busy", String(Boolean(inFlight)));
   }
 
@@ -172,11 +172,21 @@
       trigger.setAttribute("aria-label", `Alterar tecla do autocast: ${settings.triggers[key]}`);
       trigger.title = `Tecla do jogo: ${settings.triggers[key]}. Clique e pressione a substituta. Esc cancela.`;
       entry.querySelector("select").setAttribute("aria-label", `Ação da tecla ${settings.triggers[key]}`);
+      const delay = entry.querySelector("[data-skill-delay]");
+      const ownAck = acknowledged && inFlight.command.startsWith(`delay|${key}|`);
+      if (document.activeElement !== delay || ownAck)
+        delay.value = settings.skillDelays[key] || "";
+      delay.placeholder = String(settings.clickDelay);
+      delay.dataset.unavailable = String(!["left", "right"].includes(settings.binds[key]));
+      delay.setAttribute("aria-label", `Atraso da skill ${settings.triggers[key]} em milissegundos`);
+      delay.title = `20–2000 ms. Vazio usa o atraso geral (${settings.clickDelay} ms).`;
     });
     const weapon = keys.find(key => settings.binds[key] === "weapon");
     $("#weapon-return-row").hidden = !weapon;
     $("[data-weapon-key]").textContent = weapon ? `[${settings.triggers[weapon]}]` : "";
     $("#run-resume-row").hidden = !settings.resumeAfterM1;
+    $("#run-resume-m2-row").hidden = !settings.resumeAfterM2;
+    $("#hold-m1-interval-row").hidden = !settings.holdM1Enabled;
     if (acknowledged) {
       const command = inFlight.command;
       clearTimeout(busyTimeout);
@@ -217,7 +227,33 @@
       select.append(option);
     });
     select.addEventListener("change", () => send(`bind|${key}|${select.value}`));
-    entry.append(trigger, select);
+    const delayField = document.createElement("div");
+    delayField.className = "number-field binding-delay";
+    const delay = document.createElement("input");
+    delay.type = "number";
+    delay.min = "20";
+    delay.max = "2000";
+    delay.step = "1";
+    delay.dataset.skillDelay = key;
+    delay.dataset.control = "";
+    delay.disabled = true;
+    delay.addEventListener("change", () => {
+      const value = delay.value.trim() === "" ? 0 : Number(delay.value);
+      if (!Number.isInteger(value) || (value !== 0 && (value < 20 || value > 2000))) {
+        notice("error", "Use 20–2000 ms ou deixe vazio para usar o atraso geral.");
+        if (state) delay.value = state.settings.skillDelays[key] || "";
+        return;
+      }
+      send(`delay|${key}|${value}`);
+    });
+    delay.addEventListener("keydown", event => { if (event.key === "Enter") delay.blur(); });
+    delay.addEventListener("blur", () => {
+      if (state && !inFlight) delay.value = state.settings.skillDelays[key] || "";
+    });
+    const unit = document.createElement("span");
+    unit.textContent = "ms";
+    delayField.append(delay, unit);
+    entry.append(trigger, select, delayField);
     $("#key-grid").append(entry);
   });
 
