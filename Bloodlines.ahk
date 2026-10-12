@@ -5,7 +5,7 @@
 #InputLevel 0
 ;@Ahk2Exe-SetName Marco (Bloodlines)
 ;@Ahk2Exe-SetDescription Marco (Bloodlines) - local macro utility
-;@Ahk2Exe-SetVersion 1.5.0
+;@Ahk2Exe-SetVersion 1.5.1
 ;@Ahk2Exe-SetMainIcon assets\marco.ico
 
 #Include vendor\WebView2\WebView2.ahk

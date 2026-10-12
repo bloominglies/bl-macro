@@ -2,7 +2,7 @@
 
 A Windows desktop macro utility for Bloodlines on Roblox. Built with AutoHotkey v2 and a local WebView2 interface.
 
-Version **1.5.0** · Windows 10/11 x64
+Version **1.5.1** · Windows 10/11 x64
 
 ## Features
 
@@ -43,7 +43,7 @@ The header's **Motor** switch enables or pauses all macros. Roblox status is **f
 
 The initial W tap lasts 24 ms, followed by the configured interval and a held second press. Windows key repeat does not restart the sequence.
 
-Resume delay starts when the left mouse button is released. Each new attack restarts the delay; holding the button postpones recovery. Left clicks from autocast also schedule recovery. Releasing W, disabling movement or the engine, or losing Roblox focus cancels it. Recovery starts a fresh double tap after the delay, so allow additional time for that sequence and the game's animation. Increase the delay if the attack still prevents sprinting.
+Resume delay starts when the left mouse button is pressed. Each new attack restarts the delay; holding the button does not block recovery. Left clicks from autocast also schedule recovery. Releasing W, disabling movement or the engine, or losing Roblox focus cancels it. Recovery releases W for 50 ms, presses it for 50 ms, waits the configured double tap interval and holds the second press. Increase the resume delay if the attack animation still prevents sprinting.
 
 ### Keybinds
 

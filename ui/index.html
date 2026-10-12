@@ -6,8 +6,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="color-scheme" content="dark">
   <title>Marco (Bloodlines)</title>
-  <link rel="stylesheet" href="styles.css?v=1.5.0">
-  <script src="app.js?v=1.5.0" defer></script>
+  <link rel="stylesheet" href="styles.css?v=1.5.1">
+  <script src="app.js?v=1.5.1" defer></script>
 </head>
 <body>
 <div class="app-shell">
@@ -28,8 +28,8 @@
         <div class="control-row"><label for="wInterval-number">Intervalo</label><div class="number-field"><input id="wInterval-number" type="number" min="20" max="250" step="1" value="60" aria-label="Intervalo do Double Tap W em milissegundos" data-control disabled><span>ms</span></div></div>
         <div class="range-row"><span>20</span><input id="wInterval-range" type="range" min="20" max="250" step="1" value="60" aria-label="Ajustar intervalo do Double Tap W" data-control disabled><span>250 ms</span></div>
       </div>
-      <div class="control-row resume-row"><span class="setting-label" title="Repete o double tap após liberar M1, somente enquanto W permanece fisicamente pressionado">Resume after M1</span><button class="state-toggle" role="switch" aria-label="Retomar corrida após M1" aria-checked="false" title="Retomada do autorun após o último ataque" data-setting="resumeAfterM1" data-control disabled><span>…</span></button></div>
-      <div class="control-row delay-row" id="run-resume-row"><label for="runResumeDelay-number" title="Atraso após liberar M1, antes de repetir o double tap">Resume Delay</label><div class="delay-control"><input id="runResumeDelay-range" type="range" min="20" max="2000" step="1" value="350" aria-label="Ajustar atraso da retomada de corrida" title="20–2000 ms após liberar M1" data-control disabled><div class="number-field"><input id="runResumeDelay-number" type="number" min="20" max="2000" step="1" value="350" aria-label="Atraso da retomada de corrida em milissegundos" title="20–2000 ms após liberar M1" data-control disabled><span>ms</span></div></div></div>
+      <div class="control-row resume-row"><span class="setting-label" title="Repete o double tap após pressionar M1, somente enquanto W permanece fisicamente pressionado">Resume after M1</span><button class="state-toggle" role="switch" aria-label="Retomar corrida após M1" aria-checked="false" title="Retomada do autorun após o último ataque" data-setting="resumeAfterM1" data-control disabled><span>…</span></button></div>
+      <div class="control-row delay-row" id="run-resume-row"><label for="runResumeDelay-number" title="Atraso após pressionar M1, antes de repetir o double tap">Resume Delay</label><div class="delay-control"><input id="runResumeDelay-range" type="range" min="20" max="2000" step="1" value="350" aria-label="Ajustar atraso da retomada de corrida" title="20–2000 ms após pressionar M1" data-control disabled><div class="number-field"><input id="runResumeDelay-number" type="number" min="20" max="2000" step="1" value="350" aria-label="Atraso da retomada de corrida em milissegundos" title="20–2000 ms após pressionar M1" data-control disabled><span>ms</span></div></div></div>
     </section>
     <section id="page-keybinds" class="page" role="tabpanel" aria-labelledby="tab-keybinds" hidden>
       <div class="control-row feature-row"><h2>Autocast</h2><button class="state-toggle" role="switch" aria-label="Autocast" aria-checked="false" title="Habilitar autocast e teclas remapeadas" data-setting="numericEnabled" data-control disabled><span>…</span></button></div>
@@ -43,7 +43,7 @@
       <div class="control-row"><span>Start minimized</span><button class="state-toggle" role="switch" aria-label="Iniciar minimizado" aria-checked="false" title="Iniciar na bandeja com o overlay disponível" data-setting="startMinimized" data-control disabled><span>…</span></button></div>
       <div class="control-row"><span>Minimize on close</span><button class="state-toggle" role="switch" aria-label="Minimizar ao fechar" aria-checked="false" data-setting="minimizeOnClose" data-control disabled><span>…</span></button></div>
       <div class="control-row reset-row"><span>Reset settings</span><button class="text-button" id="reset-button" title="Restaurar macros, preferências e posição do overlay" data-control disabled>Reset</button></div>
-      <div class="version-row"><span>Marco (Bloodlines)</span><span data-version>v1.5.0</span></div>
+      <div class="version-row"><span>Marco (Bloodlines)</span><span data-version>v1.5.1</span></div>
     </section>
   </main>
 </div>

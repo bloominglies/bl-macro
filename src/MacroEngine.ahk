@@ -1,7 +1,8 @@
 ﻿class MacroEngine {
     static FirstTapDuration := 24
     static CenterSettleDelay := 20
-    static RestartReleaseGap := 20
+    static RestartReleaseGap := 50
+    static RestartTapDuration := 50
     static ScanCodes := KeyBindings.ScanCodes
 
     __New(config) {
@@ -14,8 +15,6 @@
         this.WGeneration := 0
         this.WTimer := 0
         this.M1PhysicalHeld := false
-        this.M1Target := 0
-        this.M1WGeneration := 0
         this.RunResumeTimer := 0
         this.RunResumeGeneration := 0
         this.RunRestartInProgress := false
@@ -114,7 +113,7 @@
         this.FirstTapStarted(generation)
     }
 
-    FirstTapStarted(generation) {
+    FirstTapStarted(generation, duration := 0) {
         Critical("On")
         if generation != this.WGeneration
             return
@@ -126,7 +125,7 @@
         this.WVirtualDown := true
         SendEvent("{Blind}{w down}")
         this.WTimer := ObjBindMethod(this, "FirstTapReleased", generation)
-        SetTimer(this.WTimer, -MacroEngine.FirstTapDuration)
+        SetTimer(this.WTimer, -(duration ? duration : MacroEngine.FirstTapDuration))
     }
 
     CanContinueW(generation) {
@@ -177,25 +176,18 @@
         hwnd := this.WTarget
         if !this.CanResumeRun(hwnd) || !RobloxInput.PointerOverTarget(hwnd)
             return
-        this.M1Target := hwnd
-        this.M1WGeneration := this.WGeneration
+        this.ScheduleRunResume(hwnd)
     }
 
     M1Up(*) {
         Critical("On")
         this.M1PhysicalHeld := false
-        hwnd := this.M1Target
-        movementGeneration := this.M1WGeneration
-        this.M1Target := 0
-        this.M1WGeneration := 0
-        if hwnd && movementGeneration = this.WGeneration && this.CanResumeRun(hwnd)
-            this.ScheduleRunResume(hwnd)
     }
 
     ScheduleRunResume(hwnd) {
         Critical("On")
         this.CancelRunResume()
-        if !this.CanResumeRun(hwnd) || this.M1PhysicalHeld || GetKeyState("LButton", "P")
+        if !this.CanResumeRun(hwnd)
             return
         generation := this.RunResumeGeneration
         this.RunResumeTimer := ObjBindMethod(this, "ResumeRun", generation, this.WGeneration, hwnd)
@@ -208,7 +200,6 @@
             return
         this.RunResumeTimer := 0
         if movementGeneration != this.WGeneration || !this.CanResumeRun(hwnd)
-            || this.M1PhysicalHeld || GetKeyState("LButton", "P") || GetKeyState("LButton")
             return
         if this.WTimer {
             SetTimer(this.WTimer, 0)
@@ -219,7 +210,7 @@
         this.ReleaseW()
         movementGeneration := ++this.WGeneration
         this.RunRestartInProgress := true
-        this.WTimer := ObjBindMethod(this, "FirstTapStarted", movementGeneration)
+        this.WTimer := ObjBindMethod(this, "FirstTapStarted", movementGeneration, MacroEngine.RestartTapDuration)
         SetTimer(this.WTimer, -MacroEngine.RestartReleaseGap)
     }
 
@@ -230,8 +221,6 @@
             SetTimer(this.RunResumeTimer, 0)
             this.RunResumeTimer := 0
         }
-        this.M1Target := 0
-        this.M1WGeneration := 0
         if !this.RunRestartInProgress
             return
         this.RunRestartInProgress := false
