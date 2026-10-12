@@ -1,0 +1,19 @@
+* text=auto
+
+*.ahk text eol=crlf
+*.ps1 text eol=crlf
+*.md text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.svg text eol=lf
+LICENSE text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+*.ico binary
+*.dll binary
+*.exe binary
+
+# Preserve upstream files byte for byte, including license notices.
+vendor/** -text

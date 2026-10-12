@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="color-scheme" content="dark">
+  <title>Marco (Bloodlines)</title>
+  <link rel="stylesheet" href="styles.css?v=1.5.0">
+  <script src="app.js?v=1.5.0" defer></script>
+</head>
+<body>
+<div class="app-shell">
+  <header class="app-header">
+    <h1>Marco <span>(Bloodlines)</span></h1>
+    <nav role="tablist" aria-label="Seções">
+      <button class="nav-item active" id="tab-movement" role="tab" data-page="movement" aria-controls="page-movement" aria-selected="true">Movement</button>
+      <button class="nav-item" id="tab-keybinds" role="tab" data-page="keybinds" aria-controls="page-keybinds" aria-selected="false" tabindex="-1">Keybinds</button>
+      <button class="nav-item" id="tab-settings" role="tab" data-page="settings" aria-controls="page-settings" aria-selected="false" tabindex="-1">Settings</button>
+    </nav>
+    <span class="connection" title="Estado da janela do Roblox">Roblox: <span data-roblox-status>…</span></span>
+    <button id="master-button" class="master-control" role="switch" aria-label="Motor de macros" aria-checked="false" title="Ativar ou pausar todos os macros" data-control disabled>Motor <span>…</span></button>
+  </header>
+  <main>
+    <section id="page-movement" class="page" role="tabpanel" aria-labelledby="tab-movement">
+      <div class="control-row feature-row"><h2>Double Tap W</h2><button class="state-toggle" role="switch" aria-label="Double Tap W" aria-checked="false" title="Habilitar Double Tap W" data-setting="movementEnabled" data-control disabled><span>…</span></button></div>
+      <div class="timing-control">
+        <div class="control-row"><label for="wInterval-number">Intervalo</label><div class="number-field"><input id="wInterval-number" type="number" min="20" max="250" step="1" value="60" aria-label="Intervalo do Double Tap W em milissegundos" data-control disabled><span>ms</span></div></div>
+        <div class="range-row"><span>20</span><input id="wInterval-range" type="range" min="20" max="250" step="1" value="60" aria-label="Ajustar intervalo do Double Tap W" data-control disabled><span>250 ms</span></div>
+      </div>
+      <div class="control-row resume-row"><span class="setting-label" title="Repete o double tap após liberar M1, somente enquanto W permanece fisicamente pressionado">Resume after M1</span><button class="state-toggle" role="switch" aria-label="Retomar corrida após M1" aria-checked="false" title="Retomada do autorun após o último ataque" data-setting="resumeAfterM1" data-control disabled><span>…</span></button></div>
+      <div class="control-row delay-row" id="run-resume-row"><label for="runResumeDelay-number" title="Atraso após liberar M1, antes de repetir o double tap">Resume Delay</label><div class="delay-control"><input id="runResumeDelay-range" type="range" min="20" max="2000" step="1" value="350" aria-label="Ajustar atraso da retomada de corrida" title="20–2000 ms após liberar M1" data-control disabled><div class="number-field"><input id="runResumeDelay-number" type="number" min="20" max="2000" step="1" value="350" aria-label="Atraso da retomada de corrida em milissegundos" title="20–2000 ms após liberar M1" data-control disabled><span>ms</span></div></div></div>
+    </section>
+    <section id="page-keybinds" class="page" role="tabpanel" aria-labelledby="tab-keybinds" hidden>
+      <div class="control-row feature-row"><h2>Autocast</h2><button class="state-toggle" role="switch" aria-label="Autocast" aria-checked="false" title="Habilitar autocast e teclas remapeadas" data-setting="numericEnabled" data-control disabled><span>…</span></button></div>
+      <div class="control-row delay-row"><label for="clickDelay-number">Click Delay</label><div class="delay-control"><input id="clickDelay-range" type="range" min="20" max="1000" step="1" value="80" aria-label="Ajustar atraso do clique" title="20–1000 ms" data-control disabled><div class="number-field"><input id="clickDelay-number" type="number" min="20" max="1000" step="1" value="80" aria-label="Atraso do clique em milissegundos" title="20–1000 ms" data-control disabled><span>ms</span></div></div></div>
+      <div class="control-row"><span class="setting-label" title="Ative junto ao shiftlock do jogo. Centraliza o cursor antes do autocast; não detecta o shiftlock automaticamente.">Center aim <span class="inline-note">shiftlock · manual</span></span><button class="state-toggle" role="switch" aria-label="Centralizar mira com shiftlock, ativação manual" aria-checked="false" title="Ative quando usar shiftlock no Roblox; desative ao sair do shiftlock" data-setting="shiftlockCenter" data-control disabled><span>…</span></button></div>
+      <div class="control-row delay-row" id="weapon-return-row" hidden><label for="weaponReturnDelay-number" title="Atraso após o clique da skill, antes de selecionar a arma">Weapon Return <span class="weapon-key" data-weapon-key></span></label><div class="delay-control"><input id="weaponReturnDelay-range" type="range" min="20" max="2000" step="1" value="150" aria-label="Ajustar atraso do retorno à arma" title="20–2000 ms após o clique" data-control disabled><div class="number-field"><input id="weaponReturnDelay-number" type="number" min="20" max="2000" step="1" value="150" aria-label="Atraso do retorno à arma em milissegundos" title="20–2000 ms após o clique" data-control disabled><span>ms</span></div></div></div>
+      <div class="key-grid" id="key-grid" aria-label="Tecla do jogo e ação do autocast"></div>
+    </section>
+    <section id="page-settings" class="page" role="tabpanel" aria-labelledby="tab-settings" hidden>
+      <div class="control-row"><span>Start with Windows</span><button class="state-toggle" role="switch" aria-label="Iniciar com o Windows" aria-checked="false" data-setting="startWithWindows" data-control disabled><span>…</span></button></div>
+      <div class="control-row"><span>Start minimized</span><button class="state-toggle" role="switch" aria-label="Iniciar minimizado" aria-checked="false" title="Iniciar na bandeja com o overlay disponível" data-setting="startMinimized" data-control disabled><span>…</span></button></div>
+      <div class="control-row"><span>Minimize on close</span><button class="state-toggle" role="switch" aria-label="Minimizar ao fechar" aria-checked="false" data-setting="minimizeOnClose" data-control disabled><span>…</span></button></div>
+      <div class="control-row reset-row"><span>Reset settings</span><button class="text-button" id="reset-button" title="Restaurar macros, preferências e posição do overlay" data-control disabled>Reset</button></div>
+      <div class="version-row"><span>Marco (Bloodlines)</span><span data-version>v1.5.0</span></div>
+    </section>
+  </main>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<dialog id="reset-dialog" aria-labelledby="reset-title"><h2 id="reset-title">Restaurar padrões?</h2><p>Macros, preferências e posição do overlay serão redefinidos.</p><div class="dialog-actions"><button class="text-button" id="reset-cancel">Cancelar</button><button class="text-button confirm-button" id="reset-confirm">Restaurar</button></div></dialog>
+</body>
+</html>

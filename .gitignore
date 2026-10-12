@@ -1,0 +1,19 @@
+# Build output and local scratch files
+/dist/
+/work/
+*.log
+*.tmp
+*.bak
+
+# Local preferences and WebView2 profiles
+/settings.ini
+/WebView2/
+
+# Editor and operating-system files
+/.idea/
+/.vscode/
+*.swp
+*.swo
+Thumbs.db
+Desktop.ini
+.DS_Store
